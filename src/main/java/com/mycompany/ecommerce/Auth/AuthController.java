@@ -36,7 +36,7 @@ public class AuthController {
 
         String token = generateToken(customer);
 
-        return ResponseEntity.ok(new AuthResponse(token, customer));
+        return ResponseEntity.ok(new AuthResponse(token,null));
     }
 
     private String generateToken(Customer customer) {
