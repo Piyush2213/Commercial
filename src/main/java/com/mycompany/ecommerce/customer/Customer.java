@@ -40,6 +40,9 @@ public class Customer {
     @Column(name = "country")
     private String country;
 
+    @Column(name = "token")
+    private String token;
+
 
     public int getId() {
         return id;
@@ -127,6 +130,14 @@ public class Customer {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public Customer(int id, String firstName, String lastName, String email, String password, String phone, String address, String city, String state, String postalCode, String country) {

@@ -5,6 +5,7 @@ import com.mycompany.ecommerce.customer.Customer;
 import com.mycompany.ecommerce.customer.CustomerSignUpDetails;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,41 +18,70 @@ public class AuthController {
     @Autowired
     private CustomerRepository customerRepository;
 
-    private String generateToken(Customer customer) {
-        // Generate a secure key for HS512 algorithm
-        byte[] keyBytes = Keys.secretKeyFor(SignatureAlgorithm.HS512).getEncoded();
-
-        // Use the generated key to sign the token
-        return Jwts.builder()
-                .setSubject(customer.getEmail())
-                .signWith(SignatureAlgorithm.HS512, keyBytes)
-                .compact();
-    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        if (request.getToken() != null) {
+            Customer customer = customerRepository.findByToken(request.getToken());
+            if (customer != null) {
+                return ResponseEntity.ok(customer);
+            }
+        }
+
         Customer customer = customerRepository.findByEmail(request.getEmail());
         if (customer == null || !customer.getPassword().equals(request.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
         }
 
-        // Generate a token for the customer
+
         String token = generateToken(customer);
 
-        // Return the token in the response
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(new AuthResponse(token, customer));
     }
+
+    private String generateToken(Customer customer) {
+        byte[] keyBytes = Keys.secretKeyFor(SignatureAlgorithm.HS512).getEncoded();
+
+        String token = Jwts.builder()
+                .setSubject(customer.getEmail())
+                .signWith(SignatureAlgorithm.HS512, keyBytes)
+                .compact();
+
+        customer.setToken(token);
+        customerRepository.updateToken(customer.getId(), token);
+
+        return token;
+    }
+
+
+
 
     @PostMapping("/signup")
     public ResponseEntity<?> createNewEmployee(@RequestBody CustomerSignUpDetails customer) {
-        String Email = customer.getEmail();
-        Customer existing = customerRepository.findByEmail(Email);
+        String email = customer.getEmail();
+        Customer existing = customerRepository.findByEmail(email);
+
         if (existing != null) {
-            throw new RuntimeException("Customer with email " + Email + " already exists.");
+            throw new RuntimeException("Customer with email " + email + " already exists.");
         }
-        Customer savedCustomer = customerRepository.save(new Customer(customer.getFirstName(), customer.getLastName(), customer.getEmail(), customer.getPassword(), customer.getPhone(), customer.getAddress(), customer.getCity(), customer.getState(), customer.getPostalCode(), customer.getCountry()));
+
+        Customer newCustomer = new Customer();
+        newCustomer.setFirstName(customer.getFirstName());
+        newCustomer.setLastName(customer.getLastName());
+        newCustomer.setEmail(email);
+        newCustomer.setPassword(customer.getPassword());
+        newCustomer.setPhone(customer.getPhone());
+        newCustomer.setAddress(customer.getAddress());
+        newCustomer.setCity(customer.getCity());
+        newCustomer.setState(customer.getState());
+        newCustomer.setPostalCode(customer.getPostalCode());
+        newCustomer.setCountry(customer.getCountry());
+
+        Customer savedCustomer = customerRepository.save(newCustomer);
+
         return ResponseEntity.ok(savedCustomer);
     }
+
 
 
 }
