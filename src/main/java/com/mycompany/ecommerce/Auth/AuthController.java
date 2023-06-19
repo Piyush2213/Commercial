@@ -72,10 +72,7 @@ public class AuthController {
         newCustomer.setPassword(customer.getPassword());
         newCustomer.setPhone(customer.getPhone());
         newCustomer.setAddress(customer.getAddress());
-        newCustomer.setCity(customer.getCity());
-        newCustomer.setState(customer.getState());
-        newCustomer.setPostalCode(customer.getPostalCode());
-        newCustomer.setCountry(customer.getCountry());
+
 
         Customer savedCustomer = customerRepository.save(newCustomer);
 

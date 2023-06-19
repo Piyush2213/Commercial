@@ -28,17 +28,7 @@ public class Customer {
     @Column(name = "address")
     private String address;
 
-    @Column(name = "city")
-    private String city;
 
-    @Column(name = "state")
-    private String state;
-
-    @Column(name = "postalcode")
-    private String postalCode;
-
-    @Column(name = "country")
-    private String country;
 
     @Column(name = "token")
     private String token;
@@ -100,37 +90,7 @@ public class Customer {
         this.address = address;
     }
 
-    public String getCity() {
-        return city;
-    }
 
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
 
     public String getToken() {
         return token;
@@ -140,7 +100,7 @@ public class Customer {
         this.token = token;
     }
 
-    public Customer(int id, String firstName, String lastName, String email, String password, String phone, String address, String city, String state, String postalCode, String country) {
+    public Customer(int id, String firstName, String lastName, String email, String password, String phone, String address) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -148,12 +108,9 @@ public class Customer {
         this.password = password;
         this.phone = phone;
         this.address = address;
-        this.city = city;
-        this.state = state;
-        this.postalCode = postalCode;
-        this.country = country;
+
     }
-    public Customer( String firstName, String lastName, String email, String password, String phone, String address, String city, String state, String postalCode, String country) {
+    public Customer( String firstName, String lastName, String email, String password, String phone, String address) {
 
         this.firstName = firstName;
         this.lastName = lastName;
@@ -161,10 +118,7 @@ public class Customer {
         this.password = password;
         this.phone = phone;
         this.address = address;
-        this.city = city;
-        this.state = state;
-        this.postalCode = postalCode;
-        this.country = country;
+
     }
     public Customer(){};
 }
