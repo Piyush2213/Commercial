@@ -2,6 +2,8 @@ package com.mycompany.ecommerce.Auth;
 
 import com.mycompany.ecommerce.Admin.Admin;
 import com.mycompany.ecommerce.Admin.AdminSignUpDetails;
+import com.mycompany.ecommerce.ProductDTO.Product;
+import com.mycompany.ecommerce.ProductDTO.productRepository;
 import com.mycompany.ecommerce.Repository.CustomerRepository;
 import com.mycompany.ecommerce.Repository.adminRepository;
 import com.mycompany.ecommerce.customer.Customer;
@@ -10,10 +12,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.jsonwebtoken.security.Keys;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,6 +27,64 @@ public class AuthController {
     private CustomerRepository customerRepository;
     @Autowired
     private adminRepository adminRepository;
+    @Autowired
+    private productRepository productRepository;
+
+    @PostMapping("/admin/products/add")
+    public ResponseEntity<?> addProduct(@RequestBody Product product, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+        Admin admin = adminRepository.findByToken(token);
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid admin token");
+        }
+        Product new_product = new Product();
+        new_product.setName(product.getName());
+        new_product.setDescription(product.getDescription());
+        new_product.setPrice(product.getPrice());
+        new_product.setQuantity(product.getQuantity());
+
+        Product savedProduct = productRepository.save(product);
+
+        return ResponseEntity.ok(savedProduct);
+    }
+
+    @PutMapping("/admin/products/{productId}")
+    public ResponseEntity<?> updateProduct(@PathVariable Integer productId, @RequestBody Product product, @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+        Admin admin = adminRepository.findByToken(token);
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid admin token");
+        }
+
+        Product existingProduct = productRepository.findProductById(productId);
+        if (existingProduct == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
+        }
+
+        existingProduct.setName(product.getName());
+        existingProduct.setDescription(product.getDescription());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setQuantity(product.getQuantity());
+
+        Product updatedProduct = productRepository.save(existingProduct);
+
+        return ResponseEntity.ok(updatedProduct);
+    }
+
+    @DeleteMapping("/admin/products/{productId}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Integer productId, @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+        Admin admin = adminRepository.findByToken(token);
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid admin token");
+        }
+        Optional<Product> optionalProduct = productRepository.findById(productId);
+        if (optionalProduct.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
+        }
+        productRepository.deleteById(productId);
+
+        return ResponseEntity.ok("Product deleted successfully");
+    }
+
+
 
 
     @PostMapping("/customer/login")
@@ -45,7 +108,6 @@ public class AuthController {
     }
     @PostMapping("/admin/login")
     public ResponseEntity<?> adminLogin(@RequestBody AuthRequest request) {
-        // Check if the request contains a token
         if (request.getToken() != null) {
             Admin admin = adminRepository.findByToken(request.getToken());
             if (admin != null) {
