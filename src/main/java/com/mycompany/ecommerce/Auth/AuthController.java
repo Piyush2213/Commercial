@@ -11,14 +11,15 @@ import com.mycompany.ecommerce.customer.CustomerSignUpDetails;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+import java.util.*;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.jsonwebtoken.security.Keys;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,6 +30,7 @@ public class AuthController {
     private adminRepository adminRepository;
     @Autowired
     private productRepository productRepository;
+
 
     @PostMapping("/admin/products/add")
     public ResponseEntity<?> addProduct(@RequestBody Product product, @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
@@ -45,6 +47,32 @@ public class AuthController {
         Product savedProduct = productRepository.save(product);
 
         return ResponseEntity.ok(savedProduct);
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<Map<String, Object>>> getAllProducts() {
+        List<Product> products = productRepository.findAll();
+        List<Map<String, Object>> response = new ArrayList<>();
+
+        for (Product product : products) {
+            Map<String, Object> productInfo = new HashMap<>();
+            productInfo.put("name", product.getName());
+            productInfo.put("price", product.getPrice());
+            response.add(productInfo);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<?> getProductById(@PathVariable Integer productId){
+        Product existingProduct = productRepository.findProductById(productId);
+        if (existingProduct == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
+        }
+        return ResponseEntity.ok(existingProduct);
     }
 
     @PutMapping("/admin/products/{productId}")
