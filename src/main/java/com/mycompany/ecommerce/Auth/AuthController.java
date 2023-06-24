@@ -1,7 +1,11 @@
 package com.mycompany.ecommerce.Auth;
+import java.math.BigDecimal;
 
 import com.mycompany.ecommerce.Admin.Admin;
 import com.mycompany.ecommerce.Admin.AdminSignUpDetails;
+import com.mycompany.ecommerce.Orders.OrderItem;
+import com.mycompany.ecommerce.Orders.OrderRepository;
+import com.mycompany.ecommerce.Orders.Orders;
 import com.mycompany.ecommerce.ProductDTO.Product;
 import com.mycompany.ecommerce.ProductDTO.productRepository;
 import com.mycompany.ecommerce.Repository.CustomerRepository;
@@ -10,6 +14,7 @@ import com.mycompany.ecommerce.customer.Customer;
 import com.mycompany.ecommerce.customer.CustomerSignUpDetails;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+
 
 import java.util.*;
 
@@ -30,6 +35,53 @@ public class AuthController {
     private adminRepository adminRepository;
     @Autowired
     private productRepository productRepository;
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @PostMapping("/customer/orders")
+    public ResponseEntity<?> placeOrder(@RequestBody Orders orders, @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+        Customer customer = customerRepository.findByToken(token);
+        if (customer == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid customer token");
+        }
+
+        List<OrderItem> orderItems = orders.getOrderItems();
+        if (orderItems == null || orderItems.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Order items are missing");
+        }
+
+        Orders newOrder = new Orders();
+        newOrder.setCustomerId(customer.getId());
+        newOrder.setOrderItems(orderItems);
+
+        newOrder.setOrderDate(new Date());
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (OrderItem orderItem : orderItems) {
+            Integer productId = orderItem.getProduct().getId();
+            if (productId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Product ID is missing in order item");
+            }
+
+            Product fetchedProduct = productRepository.findProductById(productId);
+            if (fetchedProduct == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Product not found for order item");
+            }
+
+            BigDecimal itemPrice = BigDecimal.valueOf((double) fetchedProduct.getPrice()).multiply(BigDecimal.valueOf(orderItem.getQuantity()));
+            totalAmount = totalAmount.add(itemPrice);
+        }
+
+        newOrder.setTotalAmount(totalAmount);
+
+        Orders savedOrder = orderRepository.save(newOrder);
+
+
+        return ResponseEntity.ok(savedOrder);
+    }
+
+
+
 
 
     @PostMapping("/admin/products/add")
